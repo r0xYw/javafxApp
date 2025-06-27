@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" stylesheets="@style.css">
+
+    <top>
+        <VBox style="-fx-background-color: rgba(255,255,255,0.9); -fx-padding: 15;">
+            <Label text="Система управления перевозками"
+                   style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+            <Label fx:id="userInfoLabel" text="Пользователь: Admin"
+                   style="-fx-font-size: 12px; -fx-text-fill: #666;"/>
+        </VBox>
+    </top>
+
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+
+            <!-- ВКЛАДКА: ВОДИТЕЛИ -->
+            <Tab text="👤 Водители">
+                <BorderPane>
+                    <center>
+                        <TableView fx:id="driverTable">
+                            <columns>
+                                <TableColumn text="ID" prefWidth="50">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="id"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Фамилия" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="lastName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Имя" prefWidth="120">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="firstName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Отчество" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="middleName"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Стаж (лет)" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="experience"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
+                        </TableView>
+                    </center>
+                    <bottom>
+                        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10;">
+                            <Button text="Добавить" fx:id="addButton" prefWidth="100" onAction="#handleAddDriver"/>
+                            <Button text="Редактировать" fx:id="editButton" prefWidth="100" onAction="#handleEditDriver"/>
+                            <Button text="Удалить" fx:id="deleteButton" prefWidth="100" onAction="#handleDeleteDriver"/>
+                            <Button text="Просмотр" fx:id="viewButton" prefWidth="100" onAction="#handleViewDriver"/>
+                            <Button text="Обновить" fx:id="refreshButton" prefWidth="100" onAction="#handleRefresh"/>
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </Tab>
+
+            <!-- ВКЛАДКА: МАРШРУТЫ -->
+            <Tab text="🗺️ Маршруты">
+                <BorderPane>
+                    <center>
+                        <TableView fx:id="routeTable">
+                            <columns>
+                                <TableColumn text="ID" prefWidth="50">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="id"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Отправление" prefWidth="150">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="startPoint"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Назначение" prefWidth="150">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="endPoint"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Расстояние (км)" prefWidth="120">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="distanceKm"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Время (ч)" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="estimatedTimeHours"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Базовая стоимость (₽)" prefWidth="140">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="baseCost"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
+                        </TableView>
+                    </center>
+                    <bottom>
+                        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10;">
+                            <Button text="Добавить маршрут" fx:id="addRouteButton" prefWidth="130" onAction="#handleAddRoute"/>
+                            <Button text="Редактировать" fx:id="editRouteButton" prefWidth="110" onAction="#handleEditRoute"/>
+                            <Button text="Удалить" fx:id="deleteRouteButton" prefWidth="100" onAction="#handleDeleteRoute"/>
+                            <Button text="Обновить" fx:id="refreshRouteButton" prefWidth="100" onAction="#handleRefresh"/>
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </Tab>
+
+            <!-- ВКЛАДКА: ПЕРЕВОЗКИ -->
+            <Tab text="🚚 Перевозки">
+                <BorderPane>
+                    <center>
+                        <TableView fx:id="tripTable">
+                            <columns>
+                                <TableColumn text="ID поездки" prefWidth="80">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="id"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="ID маршрута" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="routeId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="ID водителя" prefWidth="90">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="driverId"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Дата отправки" prefWidth="130">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="formattedStartTime"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Дата прибытия" prefWidth="130">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="formattedEndTime"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Стоимость (₽)" prefWidth="110">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="finalCost"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                                <TableColumn text="Статус" prefWidth="100">
+                                    <cellValueFactory>
+                                        <PropertyValueFactory property="statusRussian"/>
+                                    </cellValueFactory>
+                                </TableColumn>
+                            </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
+                        </TableView>
+                    </center>
+                    <bottom>
+                        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10;">
+                            <Button text="Добавить поездку" fx:id="addTripButton" prefWidth="130" onAction="#handleAddTrip"/>
+                            <Button text="Редактировать" fx:id="editTripButton" prefWidth="110" onAction="#handleEditTrip"/>
+                            <Button text="Удалить" fx:id="deleteTripButton" prefWidth="100" onAction="#handleDeleteTrip"/>
+                            <Button text="Просмотр" fx:id="viewTripButton" prefWidth="100" onAction="#handleViewTrip"/>
+                            <Button text="Обновить" fx:id="refreshTripButton" prefWidth="100" onAction="#handleRefresh"/>
+                        </HBox>
+                    </bottom>
+                </BorderPane>
+            </Tab>
+
+        </TabPane>
+    </center>
+</BorderPane>

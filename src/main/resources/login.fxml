@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           style="-fx-background-color: #f5f7fa;">
+
+    <!-- Простая форма входа -->
+    <VBox alignment="CENTER" spacing="20" maxWidth="320" maxHeight="400"
+          style="-fx-background-color: white;
+                 -fx-background-radius: 8;
+                 -fx-padding: 30;
+                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+
+        <!-- Заголовок -->
+        <VBox alignment="CENTER" spacing="8">
+            <Label text="Вход в систему"
+                   style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #333;">
+            </Label>
+
+            <Label text="Управление перевозками"
+                   style="-fx-font-size: 13px; -fx-text-fill: #666;">
+            </Label>
+        </VBox>
+
+        <!-- Поля ввода -->
+        <VBox spacing="15" alignment="CENTER">
+            <!-- Логин -->
+            <VBox spacing="5">
+                <Label text="Имя пользователя"
+                       style="-fx-font-size: 13px; -fx-text-fill: #555;"/>
+                <TextField fx:id="usernameField"
+                           promptText="Введите логин"
+                           prefWidth="260" prefHeight="35"
+                           style="-fx-background-color: #f8f9fa;
+                                 -fx-border-color: #e1e5e9;
+                                 -fx-border-width: 1;
+                                 -fx-border-radius: 4;
+                                 -fx-background-radius: 4;
+                                 -fx-padding: 8 12;
+                                 -fx-font-size: 14px;"/>
+            </VBox>
+
+            <!-- Пароль -->
+            <VBox spacing="5">
+                <Label text="Пароль"
+                       style="-fx-font-size: 13px; -fx-text-fill: #555;"/>
+                <PasswordField fx:id="passwordField"
+                               promptText="Введите пароль"
+                               prefWidth="260" prefHeight="35"
+                               style="-fx-background-color: #f8f9fa;
+                                     -fx-border-color: #e1e5e9;
+                                     -fx-border-width: 1;
+                                     -fx-border-radius: 4;
+                                     -fx-background-radius: 4;
+                                     -fx-padding: 8 12;
+                                     -fx-font-size: 14px;"/>
+            </VBox>
+
+            <!-- Ошибка -->
+            <Label fx:id="errorLabel" text=""
+                   style="-fx-text-fill: #dc3545; -fx-font-size: 12px;"
+                   wrapText="true" textAlignment="CENTER"/>
+
+            <!-- Кнопка входа -->
+            <Button fx:id="loginButton" text="Войти"
+                    onAction="#handleLogin"
+                    prefWidth="260" prefHeight="40"
+                    style="-fx-background-color: #007bff;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-font-size: 14px;
+                           -fx-background-radius: 4;
+                           -fx-border-color: transparent;
+                           -fx-cursor: hand;">
+            </Button>
+        </VBox>
+
+        <!-- Разделитель -->
+        <Separator prefWidth="200" style="-fx-background-color: #f0f0f0; -fx-padding: 5 0;"/>
+
+        <!-- Тестовые аккаунты -->
+        <VBox alignment="CENTER" spacing="8">
+            <Label text="Тестовые аккаунты:"
+                   style="-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-weight: bold;"/>
+
+            <VBox spacing="2" alignment="CENTER">
+                <Label text="admin / admin123"
+                       style="-fx-font-size: 11px; -fx-text-fill: #007bff;"/>
+                <Label text="manager / manager123"
+                       style="-fx-font-size: 11px; -fx-text-fill: #28a745;"/>
+            </VBox>
+        </VBox>
+    </VBox>
+</StackPane>
