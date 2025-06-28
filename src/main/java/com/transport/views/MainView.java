@@ -14,6 +14,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.ComboBox;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 import java.io.IOException;
 import java.net.URL;
@@ -98,8 +102,8 @@ public class MainView implements Initializable {
     }
 
     private void setupButtonAccess() {
-        if ("USER".equals(userRole)) {
-            // Для обычных пользователей - только просмотр
+        // Ограничиваем права для водителей
+        if ("driver".equals(userRole)) {
             addButton.setDisable(true);
             editButton.setDisable(true);
             deleteButton.setDisable(true);
@@ -112,7 +116,7 @@ public class MainView implements Initializable {
             if (editTripButton != null) editTripButton.setDisable(true);
             if (deleteTripButton != null) deleteTripButton.setDisable(true);
         }
-        // Для администраторов все кнопки доступны
+        // Для admin и dispatcher все кнопки доступны
     }
 
     private void setupUserInfo() {
@@ -124,11 +128,8 @@ public class MainView implements Initializable {
     // ===== ЗАГРУЗКА ДАННЫХ В ТРИ ТАБЛИЦЫ =====
 
     private void loadDriverData() {
-        System.out.println("=== ЗАГРУЗКА ВОДИТЕЛЕЙ ===");
         try {
             List<Driver> drivers = dbController.getAllDrivers();
-            System.out.println("Получено водителей из БД: " + drivers.size());
-
             driverData.clear();
             driverData.addAll(drivers);
 
@@ -136,12 +137,10 @@ public class MainView implements Initializable {
                 driverTable.setItems(driverData);
             }
 
-            System.out.println("Данные водителей загружены");
-
+            System.out.println("Загружено водителей: " + drivers.size());
         } catch (Exception e) {
             System.err.println("Ошибка загрузки водителей: " + e.getMessage());
-            e.printStackTrace();
-            showAlert("Ошибка", "Не удалось загрузить данные водителей: " + e.getMessage());
+            showAlert("Ошибка", "Не удалось загрузить водителей: " + e.getMessage());
         }
     }
 
@@ -168,11 +167,8 @@ public class MainView implements Initializable {
     }
 
     private void loadTripData() {
-        System.out.println("=== ЗАГРУЗКА ПОЕЗДОК ===");
         try {
             List<Trip> trips = dbController.getAllTrips();
-            System.out.println("Получено поездок из БД: " + trips.size());
-
             tripData.clear();
             tripData.addAll(trips);
 
@@ -180,12 +176,10 @@ public class MainView implements Initializable {
                 tripTable.setItems(tripData);
             }
 
-            System.out.println("Данные поездок загружены");
-
+            System.out.println("Загружено поездок: " + trips.size());
         } catch (Exception e) {
             System.err.println("Ошибка загрузки поездок: " + e.getMessage());
-            e.printStackTrace();
-            showAlert("Ошибка", "Не удалось загрузить данные поездок: " + e.getMessage());
+            showAlert("Ошибка", "Не удалось загрузить поездки: " + e.getMessage());
         }
     }
 
@@ -291,16 +285,21 @@ public class MainView implements Initializable {
 
     @FXML
     private void handleAddTrip() {
-        System.out.println("Добавить поездку");
+        System.out.println("=== КНОПКА ДОБАВИТЬ ПОЕЗДКУ НАЖАТА ===");
 
         Dialog<Trip> dialog = createTripDialog("Добавить поездку", null);
         Optional<Trip> result = dialog.showAndWait();
 
-        result.ifPresent(trip -> {
+        if (result.isPresent()) {
+            Trip trip = result.get();
+            System.out.println("=== ДАННЫЕ ИЗ ДИАЛОГА ===");
+            System.out.println("Route ID: " + trip.getRouteId());
+            System.out.println("Driver ID: " + trip.getDriverId());
+            System.out.println("Start Time: " + trip.getStartTime());
+
             try {
                 boolean success = dbController.addTrip(
                         trip.getRouteId(),
-                        0, // vehicle_id не используется
                         trip.getDriverId(),
                         trip.getStartTime(),
                         trip.getStatus(),
@@ -309,6 +308,8 @@ public class MainView implements Initializable {
                         trip.getCargoWeight()
                 );
 
+                System.out.println("=== РЕЗУЛЬТАТ ДОБАВЛЕНИЯ: " + success + " ===");
+
                 if (success) {
                     showAlert("Успех", "Поездка успешно добавлена!");
                     loadTripData();
@@ -316,9 +317,13 @@ public class MainView implements Initializable {
                     showAlert("Ошибка", "Не удалось добавить поездку");
                 }
             } catch (Exception e) {
-                showAlert("Ошибка", "Ошибка при добавлении: " + e.getMessage());
+                System.err.println("=== ИСКЛЮЧЕНИЕ ===");
+                e.printStackTrace();
+                showAlert("Ошибка", "Ошибка: " + e.getMessage());
             }
-        });
+        } else {
+            System.out.println("=== ДИАЛОГ ОТМЕНЕН ===");
+        }
     }
 
     @FXML
@@ -335,7 +340,6 @@ public class MainView implements Initializable {
                     boolean success = dbController.updateTrip(
                             selectedTrip.getId(),
                             trip.getRouteId(),
-                            0, // vehicle_id не используется
                             trip.getDriverId(),
                             trip.getStartTime(),
                             trip.getEndTime(),
@@ -629,10 +633,7 @@ public class MainView implements Initializable {
 
         TextField routeIdField = new TextField();
         TextField driverIdField = new TextField();
-        DatePicker startDatePicker = new DatePicker();
         TextField startTimeField = new TextField();
-        DatePicker endDatePicker = new DatePicker();
-        TextField endTimeField = new TextField();
         ComboBox<String> statusCombo = new ComboBox<>();
         statusCombo.getItems().addAll("planned", "in_progress", "completed", "cancelled");
         statusCombo.setValue("planned");
@@ -646,12 +647,7 @@ public class MainView implements Initializable {
             routeIdField.setText(String.valueOf(existingTrip.getRouteId()));
             driverIdField.setText(String.valueOf(existingTrip.getDriverId()));
             if (existingTrip.getStartTime() != null) {
-                startDatePicker.setValue(existingTrip.getStartTime().toLocalDate());
-                startTimeField.setText(existingTrip.getStartTime().toLocalTime().toString().substring(0, 5));
-            }
-            if (existingTrip.getEndTime() != null) {
-                endDatePicker.setValue(existingTrip.getEndTime().toLocalDate());
-                endTimeField.setText(existingTrip.getEndTime().toLocalTime().toString().substring(0, 5));
+                startTimeField.setText(existingTrip.getStartTime().toString());
             }
             statusCombo.setValue(existingTrip.getStatus());
             if (existingTrip.getFinalCost() != null) {
@@ -663,28 +659,27 @@ public class MainView implements Initializable {
             if (existingTrip.getCargoDescription() != null) {
                 descriptionArea.setText(existingTrip.getCargoDescription());
             }
+        } else {
+            // Значения по умолчанию для новой поездки
+            startTimeField.setText(LocalDateTime.now().toString());
+            costField.setText("10000");
+            weightField.setText("5.0");
         }
 
         grid.add(new Label("ID маршрута:"), 0, 0);
         grid.add(routeIdField, 1, 0);
         grid.add(new Label("ID водителя:"), 0, 1);
         grid.add(driverIdField, 1, 1);
-        grid.add(new Label("Дата начала:"), 0, 2);
-        grid.add(startDatePicker, 1, 2);
-        grid.add(new Label("Время начала (ЧЧ:ММ):"), 0, 3);
-        grid.add(startTimeField, 1, 3);
-        grid.add(new Label("Дата окончания:"), 0, 4);
-        grid.add(endDatePicker, 1, 4);
-        grid.add(new Label("Время окончания (ЧЧ:ММ):"), 0, 5);
-        grid.add(endTimeField, 1, 5);
-        grid.add(new Label("Статус:"), 0, 6);
-        grid.add(statusCombo, 1, 6);
-        grid.add(new Label("Стоимость (₽):"), 0, 7);
-        grid.add(costField, 1, 7);
-        grid.add(new Label("Вес груза (т):"), 0, 8);
-        grid.add(weightField, 1, 8);
-        grid.add(new Label("Описание груза:"), 0, 9);
-        grid.add(descriptionArea, 1, 9);
+        grid.add(new Label("Время начала (YYYY-MM-DDTHH:MM):"), 0, 2);
+        grid.add(startTimeField, 1, 2);
+        grid.add(new Label("Статус:"), 0, 3);
+        grid.add(statusCombo, 1, 3);
+        grid.add(new Label("Стоимость (₽):"), 0, 4);
+        grid.add(costField, 1, 4);
+        grid.add(new Label("Вес груза (т):"), 0, 5);
+        grid.add(weightField, 1, 5);
+        grid.add(new Label("Описание груза:"), 0, 6);
+        grid.add(descriptionArea, 1, 6);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -694,40 +689,21 @@ public class MainView implements Initializable {
                     Trip trip = new Trip();
                     trip.setRouteId(Integer.parseInt(routeIdField.getText().trim()));
                     trip.setDriverId(Integer.parseInt(driverIdField.getText().trim()));
-
-                    // Формируем дату и время начала
-                    if (startDatePicker.getValue() != null && !startTimeField.getText().trim().isEmpty()) {
-                        String[] timeParts = startTimeField.getText().trim().split(":");
-                        trip.setStartTime(startDatePicker.getValue().atTime(
-                                Integer.parseInt(timeParts[0]),
-                                Integer.parseInt(timeParts[1])
-                        ));
-                    }
-
-                    // Формируем дату и время окончания (может быть пустым)
-                    if (endDatePicker.getValue() != null && !endTimeField.getText().trim().isEmpty()) {
-                        String[] timeParts = endTimeField.getText().trim().split(":");
-                        trip.setEndTime(endDatePicker.getValue().atTime(
-                                Integer.parseInt(timeParts[0]),
-                                Integer.parseInt(timeParts[1])
-                        ));
-                    }
-
+                    trip.setStartTime(LocalDateTime.parse(startTimeField.getText().trim()));
                     trip.setStatus(statusCombo.getValue());
+                    trip.setCargoDescription(descriptionArea.getText().trim());
 
                     if (!costField.getText().trim().isEmpty()) {
-                        trip.setFinalCost(new java.math.BigDecimal(costField.getText().trim()));
+                        trip.setFinalCost(new BigDecimal(costField.getText().trim()));
                     }
 
                     if (!weightField.getText().trim().isEmpty()) {
-                        trip.setCargoWeight(new java.math.BigDecimal(weightField.getText().trim()));
+                        trip.setCargoWeight(new BigDecimal(weightField.getText().trim()));
                     }
-
-                    trip.setCargoDescription(descriptionArea.getText().trim());
 
                     return trip;
                 } catch (Exception e) {
-                    showAlert("Ошибка", "Проверьте правильность введенных данных!\nФормат времени: ЧЧ:ММ");
+                    showAlert("Ошибка", "Проверьте правильность введенных данных!\nФормат времени: YYYY-MM-DDTHH:MM:SS");
                     return null;
                 }
             }
@@ -736,7 +712,6 @@ public class MainView implements Initializable {
 
         return dialog;
     }
-
     private Dialog<Driver> createDriverDialog(String title, Driver existingDriver) {
         Dialog<Driver> dialog = new Dialog<>();
         dialog.setTitle(title);

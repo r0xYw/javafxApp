@@ -5,7 +5,7 @@ import com.transport.models.Trip;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+
 import com.transport.models.User;
 import com.transport.models.Driver; // Добавляем импорт для Driver
 import java.sql.*;
@@ -108,9 +108,10 @@ public class DatabaseController {
     }
 
     // Метод для получения всех водителей
+    // Вместо QueryResult<Driver> используйте List<Driver>
     public List<Driver> getAllDrivers() {
         List<Driver> drivers = new ArrayList<>();
-        String query = "SELECT id, last_name, first_name, middle_name, experience FROM drivers"; // user_id не нужен в SELECT для отображения
+        String query = "SELECT id, last_name, first_name, middle_name, experience FROM drivers";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -126,12 +127,49 @@ public class DatabaseController {
                 drivers.add(driver);
             }
         } catch (SQLException e) {
-            System.err.println("Ошибка получения списка водителей: " + e.getMessage());
+            System.err.println("Ошибка получения водителей: " + e.getMessage());
             e.printStackTrace();
         }
         return drivers;
     }
 
+    // И для поездок
+    public List<Trip> getAllTrips() {
+        List<Trip> trips = new ArrayList<>();
+        String query = "SELECT id, route_id, driver_id, start_time, end_time, status, cargo_description, final_cost, cargo_weight FROM trips ORDER BY start_time DESC";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                Trip trip = new Trip();
+                trip.setId(rs.getInt("id"));
+                trip.setRouteId(rs.getInt("route_id"));
+                trip.setDriverId(rs.getInt("driver_id"));
+
+                Timestamp startTs = rs.getTimestamp("start_time");
+                if (startTs != null) {
+                    trip.setStartTime(startTs.toLocalDateTime());
+                }
+
+                Timestamp endTs = rs.getTimestamp("end_time");
+                if (endTs != null) {
+                    trip.setEndTime(endTs.toLocalDateTime());
+                }
+
+                trip.setStatus(rs.getString("status"));
+                trip.setCargoDescription(rs.getString("cargo_description"));
+                trip.setFinalCost(rs.getBigDecimal("final_cost"));
+                trip.setCargoWeight(rs.getBigDecimal("cargo_weight"));
+
+                trips.add(trip);
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка получения поездок: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return trips;
+    }
     // Метод для добавления нового водителя
     public boolean addDriver(String lastName, String firstName, String middleName, int experience) {
         String query = "INSERT INTO drivers (last_name, first_name, middle_name, experience, user_id) VALUES (?, ?, ?, ?, ?)";
@@ -229,7 +267,7 @@ public class DatabaseController {
     }
     public List<Route> getAllRoutes() {
         List<Route> routes = new ArrayList<>();
-        String query = "SELECT id, start_point, end_point, distance_km, estimated_time_hours, difficulty, base_cost FROM routes ORDER BY start_point, end_point";
+        String query = "SELECT id, start_point, end_point, distance_km, estimated_time_hours, difficulty, base_cost FROM routes";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -312,61 +350,63 @@ public class DatabaseController {
 
 // ===== МЕТОДЫ ДЛЯ РАБОТЫ С ПОЕЗДКАМИ =====
 
-    public List<Trip> getAllTrips() {
-        List<Trip> trips = new ArrayList<>();
-        // Простой запрос без JOIN - показываем только ID
-        String query = "SELECT id, route_id, driver_id, start_time, end_time, status, cargo_description, final_cost, cargo_weight FROM trips ORDER BY start_time DESC";
 
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            while (rs.next()) {
-                Trip trip = new Trip();
-                trip.setId(rs.getInt("id"));
-                trip.setRouteId(rs.getInt("route_id"));
-                trip.setDriverId(rs.getInt("driver_id"));
-
-                // Даты
-                Timestamp startTs = rs.getTimestamp("start_time");
-                if (startTs != null) {
-                    trip.setStartTime(startTs.toLocalDateTime());
-                }
-
-                Timestamp endTs = rs.getTimestamp("end_time");
-                if (endTs != null) {
-                    trip.setEndTime(endTs.toLocalDateTime());
-                }
-
-                trip.setStatus(rs.getString("status"));
-                trip.setCargoDescription(rs.getString("cargo_description"));
-                trip.setFinalCost(rs.getBigDecimal("final_cost"));
-                trip.setCargoWeight(rs.getBigDecimal("cargo_weight"));
-
-                trips.add(trip);
-            }
-        } catch (SQLException e) {
-            System.err.println("Ошибка получения поездок: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return trips;
-    }
-
-    public boolean addTrip(int routeId, int vehicleId, int driverId, LocalDateTime startTime,
+    public boolean addTrip(int routeId, int driverId, LocalDateTime startTime,
                            String status, String cargoDescription, BigDecimal finalCost, BigDecimal cargoWeight) {
-        String query = "INSERT INTO trips (route_id, vehicle_id, driver_id, start_time, status, cargo_description, final_cost, cargo_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        // ОТЛАДКА - проверим все параметры
+        System.out.println("=== ПАРАМЕТРЫ addTrip ===");
+        System.out.println("routeId: " + routeId);
+        System.out.println("driverId: " + driverId);
+        System.out.println("startTime: " + startTime);
+        System.out.println("status: " + status);
+        System.out.println("cargoDescription: " + cargoDescription);
+        System.out.println("finalCost: " + finalCost);
+        System.out.println("cargoWeight: " + cargoWeight);
+
+        String query = "INSERT INTO trips (route_id, driver_id, start_time, status, cargo_description, final_cost, cargo_weight) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, routeId);
-            stmt.setInt(2, vehicleId);
-            stmt.setInt(3, driverId);
-            stmt.setTimestamp(4, Timestamp.valueOf(startTime));
-            stmt.setString(5, status);
-            stmt.setString(6, cargoDescription);
-            stmt.setBigDecimal(7, finalCost);
-            stmt.setBigDecimal(8, cargoWeight);
+            stmt.setInt(2, driverId);
 
+            // ПРОВЕРКА startTime
+            if (startTime != null) {
+                stmt.setTimestamp(3, Timestamp.valueOf(startTime));
+            } else {
+                System.err.println("ОШИБКА: startTime равен null!");
+                stmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now())); // Текущее время по умолчанию
+            }
+
+            // ПРОВЕРКА status
+            if (status != null && !status.trim().isEmpty()) {
+                stmt.setString(4, status);
+            } else {
+                stmt.setString(4, "planned"); // По умолчанию
+            }
+
+            // ПРОВЕРКА cargoDescription
+            stmt.setString(5, cargoDescription != null ? cargoDescription : "");
+
+            // ПРОВЕРКА finalCost
+            if (finalCost != null) {
+                stmt.setBigDecimal(6, finalCost);
+            } else {
+                stmt.setBigDecimal(6, new BigDecimal("0.00"));
+            }
+
+            // ПРОВЕРКА cargoWeight
+            if (cargoWeight != null) {
+                stmt.setBigDecimal(7, cargoWeight);
+            } else {
+                stmt.setBigDecimal(7, new BigDecimal("0.00"));
+            }
+
+            System.out.println("Выполняем SQL: " + query);
             int result = stmt.executeUpdate();
+            System.out.println("Затронуто строк: " + result);
             return result > 0;
+
         } catch (SQLException e) {
             System.err.println("Ошибка добавления поездки: " + e.getMessage());
             e.printStackTrace();
@@ -374,14 +414,13 @@ public class DatabaseController {
         }
     }
 
-    public boolean updateTrip(int id, int routeId, int vehicleId, int driverId, LocalDateTime startTime,
+    public boolean updateTrip(int id, int routeId, int driverId, LocalDateTime startTime,
                               LocalDateTime endTime, String status, String cargoDescription,
                               BigDecimal finalCost, BigDecimal cargoWeight) {
         String query = "UPDATE trips SET route_id = ?, vehicle_id = ?, driver_id = ?, start_time = ?, end_time = ?, status = ?, cargo_description = ?, final_cost = ?, cargo_weight = ? WHERE id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, routeId);
-            stmt.setInt(2, vehicleId);
             stmt.setInt(3, driverId);
             stmt.setTimestamp(4, Timestamp.valueOf(startTime));
             stmt.setTimestamp(5, endTime != null ? Timestamp.valueOf(endTime) : null);
